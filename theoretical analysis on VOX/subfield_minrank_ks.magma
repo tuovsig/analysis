@@ -1,3 +1,4 @@
+// set simple vox parameters q, O, V, c, t
 q := 251;
 O := 4;
 V := 5;
