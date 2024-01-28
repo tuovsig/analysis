@@ -11,7 +11,7 @@ Such condition allows us to create a new MinRank instance of block matrices wher
 We conduct the experiment on a server with a 2.40GHz Intel(R) Xeon(R) Silver 4214R CPU and 32GB RAM. The effectiveness of this attack is surprising, with 6 of 9 recommended VOX parameters attacked using less than two seconds, 8 of 9 attacked using less than one minute.
 
 |  λ  |  q  |  O  |  V  |  c  |  t  | Running time (second) | Total Memory Usage (MB) |
-| --- | --- | --- | --- | --- | --- | --------------------- | ----------------------- |
+| :-: | :-: | :-: | :-: | :-: | :-: | --------------------: | ----------------------: |
 | 128 | 251 |  4  |  5  | 13  |  6  |          0.170        |           32.09         |
 | 128 | 251 |  5  |  6  | 11  |  6  |          0.510        |           32.09         |
 | 128 | 251 |  6  |  7  |  9  |  6  |      27357.799        |         6147.06         |
