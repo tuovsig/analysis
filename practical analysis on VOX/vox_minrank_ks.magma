@@ -1,0 +1,107 @@
+// parameters for VOX
+q := 251;
+O := 6;
+V := 7;
+c := 9;
+t := 6;
+
+o := O*c;
+v := V*c;
+N := O+V;
+n := N*c;
+m := o;
+l := 2;
+r := l*V+t;
+field<z> := GF(q^c);
+
+// Generation of central map
+F0 := [RandomMatrix(field, N, N): i in [1..t]];
+F1 := [RandomMatrix(field, V, V): i in [1..m-t]];
+F2 := [RandomMatrix(field, V, O): i in [1..m-t]];
+F3 := [RandomMatrix(field, O, V): i in [1..m-t]];
+FF := F0 cat [VerticalJoin(
+    HorizontalJoin(F1[i], F2[i]),
+    HorizontalJoin(F3[i], ZeroMatrix(field, O, O))
+): i in [1..m-t]];
+
+// Generation of linear map
+S2 := RandomMatrix(field, V, O);
+S := VerticalJoin(
+    HorizontalJoin(
+        ScalarMatrix(V, One(field)), S2
+    ), 
+    HorizontalJoin(
+        ZeroMatrix(field, O, V), ScalarMatrix(O, One(field))
+    )
+);
+T2 := RandomMatrix(BaseField(field), t, m-t);
+T := VerticalJoin(
+    HorizontalJoin(
+        ScalarMatrix(t, One(BaseField(field))), T2
+    ),
+    HorizontalJoin(
+        ZeroMatrix(BaseField(field), m-t, t), 
+        ScalarMatrix(m-t, One(BaseField(field)))
+    )
+);
+
+// Generation of public key
+P := [Transpose(S)*FF[i]*S: i in [1..m]];
+PP := [
+    &+[T[i][j]*P[j]: j in [1..m]]
+    : i in [1..m]
+];
+PTP := [(Transpose(PP[i]) + PP[i]): i in [1..m]];
+PMD := [(Matrix(
+    [PTP[j][i]: j in [1..m]]
+)): i in [1..N]];
+
+Z := ZeroMatrix(field, m, N*l);
+RM := [
+    [InsertBlock(Z, PMD[i], 1, N*j+1): i in [1..N]]: j in [0..l-1]
+];
+
+// The answer matrix for check
+Ans := &+[
+    &+[
+        -S2[j][O-l+i] * RM[i][j]: j in [1..V]
+    ]: i in [1..l]
+]
++
+&+[
+    RM[i][i+N-l]: i in [1..l]
+];
+
+// Polynomial Ring, linear variables and kernel variables
+PP<[w]> := PolynomialRing(field, l*V+r*(l*N-r), "glex");
+X := [Eltseq(w)[(i-1)*V+1..i*V]: i in [1..l]];
+Y := [Eltseq(w)[l*V+(i-1)*r+1..l*V+i*r]: i in [1..l*N-r]];
+
+// Matrix M_s and Kernel matrix
+MatX := &+[
+    &+[
+        X[i][j] * RMatrixSpace(PP, m, N*l)!RM[i][j]: j in [1..V]
+    ]: i in [1..l]
+]
++
+&+[
+    RMatrixSpace(PP, m, N*l)!RM[i][i+N-l]: i in [1..l]
+];
+MatY := Matrix([
+    Y[i][1..r] cat [0: j in [r+1..l*N]]: i in [1..l*N-r]
+]);
+for i in [1..l*N-r] do
+    MatY[i][r+i] := 1;
+end for;
+MatY := Transpose(MatY);
+
+// Generation of KS equations
+KS := MatX * MatY;
+Poly := &cat[&cat[[KS[i][j]: j in [1..l*N-r]]: i in [1..m]]];
+I := ideal<PP | Poly>;
+
+// Calculate Groebner basis
+SetVerbose("Groebner", 1);
+time Groebner(I);
+print("");
+I;
