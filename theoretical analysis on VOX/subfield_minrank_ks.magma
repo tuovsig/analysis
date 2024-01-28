@@ -1,0 +1,133 @@
+q := 251;
+O := 4;
+V := 5;
+c := 14;
+t := 5;
+// set colstokeep for ks model
+d := 1;
+
+o := O*c;
+v := V*c;
+N := O+V;
+n := N*c;
+m := o;
+
+c1 := 1;
+c2 := c;
+
+for i in [2 .. c] do
+    if c mod i eq 0 then
+	c1 := Round(c/i);
+	c2 := i;
+        break;
+    end if;
+end for;
+
+r := c2*V+t;
+colstokeep := Minimum(d, c2*N-r);
+
+Fq := GF(q);
+R<x> := PolynomialRing(Fq);
+f := IrreduciblePolynomial(Fq, c);
+fi := IrreduciblePolynomial(Fq, c1); 
+field<g> := ext< Fq | f >;
+interfield<h> := ext< Fq | fi>;
+roots := Roots(fi, field);
+mu := roots[1][1];
+//print(mu);
+
+//SetOutputFile("field_minrank_ks_magma_" cat IntegerToString(V) cat IntegerToString(O) cat IntegerToString(t) cat ".txt": Overwrite:=true);
+
+function EletoMat(a)
+    return Transpose(Matrix([ElementToSequence(a*g^i): i in [0..c-1]]));
+end function;
+
+function MattoEle(A)
+    return &+ [A[i][1]*h^(i-1) : i in [1..Nrows(A)]];
+end function;
+
+function EletoIntermat(a)
+    PHIa := EletoMat(a);
+    M := Transpose(Matrix(&cat [[ElementToSequence(g^i*mu^j): j in [0..c1-1]]: i in [0..c2-1]]));
+    PSIa := M^-1*PHIa*M;
+    return Matrix([[MattoEle(Submatrix(PSIa,[c1*(i-1)+1..c1*i],[c1*(j-1)+1..c1*j])) : j in [1..c2]] : i in [1..c2]]);
+end function;
+
+function MatInter(A)
+    return VerticalJoin([HorizontalJoin([ EletoIntermat(A[i][j]) : j in [1..Ncols(A)] ]) : i in [1..Nrows(A)]]);
+end function;
+
+F0 := [RandomMatrix(field, N, N): i in [1..t]];
+F1 := [RandomMatrix(field, V, V): i in [1..m-t]];
+F2 := [RandomMatrix(field, V, O): i in [1..m-t]];
+F3 := [RandomMatrix(field, O, V): i in [1..m-t]];
+
+FF := F0 cat [VerticalJoin(
+    HorizontalJoin(F1[i], F2[i]),
+    HorizontalJoin(F3[i], ZeroMatrix(field, O, O))
+): i in [1..m-t]];
+
+S2 := RandomMatrix(field, V, O);
+S := VerticalJoin(
+    HorizontalJoin(
+        ScalarMatrix(V, One(field)), S2
+    ), 
+    HorizontalJoin(
+        ZeroMatrix(field, O, V), ScalarMatrix(O, One(field))
+    )
+);
+
+T2 := RandomMatrix(BaseField(field), t, m-t);
+T := VerticalJoin(
+    HorizontalJoin(
+        ScalarMatrix(t, One(BaseField(field))), T2
+    ),
+    HorizontalJoin(
+        ZeroMatrix(BaseField(field), m-t, t), ScalarMatrix(m-t, One(BaseField(field)))
+    )
+);
+
+P := [Transpose(S)*FF[i]*S: i in [1..m]];
+PP := [
+    &+[T[i][j]*P[j]: j in [1..m]]
+    : i in [1..m]
+];
+
+PTP := [(Transpose(PP[i]) + PP[i]): i in [1..m]];
+
+PTPInter := [MatInter(PTP[i]): i in [1..m]];
+
+PMD := [(Matrix(
+    [PTPInter[j][i]: j in [1..m]]
+)): i in [1..c2*N]];
+
+result := MatInter(Transpose(S^-1))[c2*V+1];
+
+PR<[w]> := PolynomialRing(interfield, c2*V+r*colstokeep, "glex");
+X := Eltseq(w)[1..c2*V];
+Y := [Eltseq(w)[c2*V+(i-1)*r+1..c2*V+i*r]: i in [1..colstokeep]];
+//print(Y);
+
+MatX := &+[X[i]*ChangeRing(PMD[i], PR): i in [1..c2*V]] + PMD[c2*V+1];
+
+MatY := Matrix([
+    Y[i][1..r] cat [0: j in [r+1..c2*N]]: i in [1..colstokeep]
+]);
+for i in [1..colstokeep] do
+    MatY[i][r+i] := 1;
+end for;
+MatY := Transpose(MatY);
+
+KS := MatX * MatY;
+//print(KS);
+
+Poly := &cat[&cat[[KS[i][j]: j in [1..colstokeep]]: i in [1..m]]];
+//print(Poly);
+
+
+I := ideal<PR | Poly>;
+//print(result);
+SetVerbose("Groebner", 1);
+time Groebner(I);
+print("");
+I;
