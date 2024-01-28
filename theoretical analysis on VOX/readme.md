@@ -1,4 +1,4 @@
-# Minrank Attack over Intermediate Field for VOX New Parameters
+# Minrank Attack over Intermediate Field for Simper VOX parameters
 
 ## Introduction
 
