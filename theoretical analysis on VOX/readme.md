@@ -1,4 +1,4 @@
-# Minrank Attack over Intermediate Field for Simple VOX parameters
+# Minrank Attack over Subfield for Simple VOX parameters
 
 ## Introduction
 
