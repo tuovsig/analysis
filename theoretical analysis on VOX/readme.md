@@ -1,4 +1,4 @@
-# Minrank Attack over Subfield for Simple VOX parameters
+# Minrank Attack over Subfield for Simple VOX Parameters
 
 ## Introduction
 
@@ -16,7 +16,7 @@ Relative to prior MinRank attacks, our investigation specifically leverages the 
 This repository provides demonstration code for a Minrank attack on the VOX cryptosystem. Users should have a working Magma environment set up and follow the instructions in the code comments to configure relevant parameters. 
 
 ```
-// set vox parameters q, O, V, c, t
+// set simple vox parameters q, O, V, c, t
 q := 251;
 O := 4;
 V := 5;
